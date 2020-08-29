@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.View;
@@ -56,6 +57,14 @@ public class CalendarTab extends AppCompatActivity implements View.OnClickListen
 
     Button pvs_button;
     Button nxt_button;
+
+    int lastMonthStartDay;
+    int dayOfMonth;
+    int thisMonthLastDay;
+
+    int month = 0;
+    int date = 0;
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -134,13 +143,10 @@ public class CalendarTab extends AppCompatActivity implements View.OnClickListen
     //캘린더 구현
     private void getCalendar(Calendar mCal) {
 
-        int lastMonthStartDay;
-        int dayOfMonth;
-        int thisMonthLastDay;
 
         dayList.clear();
 
-        // 이번달 시작일의 요일을 구한다. 시작일이 일요일인 경우 인덱스를 1(일요일)에서 8(다음주 일요일)로 바꾼다.)
+        // 이번달 시작일의 요일을 구한다.
         dayOfMonth = mCal.get(Calendar.DAY_OF_WEEK);
         thisMonthLastDay = mCal.getActualMaximum(Calendar.DAY_OF_MONTH);
 
@@ -151,14 +157,26 @@ public class CalendarTab extends AppCompatActivity implements View.OnClickListen
 
         mCal.add(Calendar.MONTH, 1);
 
-        if (dayOfMonth == SUNDAY) {
-            dayOfMonth += 7;
-        }
-
         lastMonthStartDay -= (dayOfMonth - 1) - 1;
 
-        // 캘린더 타이틀(년월 표시)을 세팅한다.
+        // 캘린더 타이틀(년월 표시)을 세팅
         tvDate.setText((mCal.get(Calendar.MONTH) + 1) + "월");
+
+        switch (mCal.get(Calendar.MONTH)+1){
+            case 1: {month = 1; break;}
+            case 2: {month = 2; break;}
+            case 3: {month = 3; break;}
+            case 4: {month = 4; break;}
+            case 5: {month = 5; break;}
+            case 6: {month = 6; break;}
+            case 7: {month = 7; break;}
+            case 8: {month = 8; break;}
+            case 9: {month = 9; break;}
+            case 10: {month = 10; break;}
+            case 11: {month = 11; break;}
+            case 12: {month = 12; break;}
+        }
+
 
         DayInfo day;
 
@@ -167,6 +185,7 @@ public class CalendarTab extends AppCompatActivity implements View.OnClickListen
             day = new DayInfo();
             day.setDay(Integer.toString(date));
             day.setInMonth(false);
+            //System.out.println("lastmonthstartday : " + lastMonthStartDay + ", dayofmonth" + dayOfMonth);
 
             dayList.add(day);
         }
@@ -193,12 +212,14 @@ public class CalendarTab extends AppCompatActivity implements View.OnClickListen
     public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
 
         DayInfo day = dayList.get(position);
-
+        date = position - dayOfMonth + 2;
         //해당 월에 해당하는 날짜일 때
         if(day.isInMonth()) {
             //Toast.makeText(getApplicationContext(),""+position, Toast.LENGTH_SHORT).show();
             Intent intent = new Intent(CalendarTab.this, CalendarDetail.class);
             intent.putExtra("pos", position);
+            intent.putExtra("month", month);
+            intent.putExtra("date", date);
             startActivity(intent);
         }
 
@@ -218,7 +239,6 @@ public class CalendarTab extends AppCompatActivity implements View.OnClickListen
             getCalendar(mCal);
         }
     }
-
 
     // 그리드뷰 어댑터
     public class GridAdapter extends BaseAdapter {
@@ -252,8 +272,12 @@ public class CalendarTab extends AppCompatActivity implements View.OnClickListen
 
         @Override
         public View getView(final int position, View convertView, ViewGroup parent) {
+
+            final DBHelper dbHelper = new DBHelper(getApplicationContext(), "AA.db", null, 1);
+            int state = dbHelper.getResult_state(position, month);
             DayInfo day = dayList.get(position);
             ViewHolder holder = null;
+
             if (convertView == null) {
                 convertView = minflater.inflate(mresource, null);
                 convertView.setLayoutParams(new GridView.LayoutParams(1080 / 7 + 1080 % 7, 180));
@@ -265,6 +289,21 @@ public class CalendarTab extends AppCompatActivity implements View.OnClickListen
             } else {
                 holder = (ViewHolder) convertView.getTag();
             }
+
+            if (state == 0) {
+            } else if (state == 1) {
+                //물방울만
+                holder.waterdrop.setImageResource(R.drawable.waterdrop_color);
+                holder.injection.setImageResource(R.drawable.injection);
+            } else if (state == 2) {
+                //주사기만
+                holder.waterdrop.setImageResource(R.drawable.waterdrop);
+                holder.injection.setImageResource(R.drawable.injection_color);
+            } else {
+                holder.waterdrop.setImageResource(R.drawable.waterdrop_color);
+                holder.injection.setImageResource(R.drawable.injection_color);
+            }
+
 
             if (day != null) {
                 holder.tvItem.setText(day.getDay());
@@ -298,7 +337,6 @@ public class CalendarTab extends AppCompatActivity implements View.OnClickListen
 
             return convertView;
         }
-
 
         public class ViewHolder {
             public ImageView waterdrop;

@@ -56,32 +56,39 @@ public class CalendarDetail extends AppCompatActivity {
     EditText memo_et;
     String text = null;
 
+    TextView tv_date;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.fragment_calendar_detail);
 
-        final DBHelper dbHelper = new DBHelper(getApplicationContext(), "AAA.db", null, 1);
+        final DBHelper dbHelper = new DBHelper(getApplicationContext(), "AA.db", null, 1);
         final Intent intent = new Intent(getIntent());
         final int pos = intent.getIntExtra("pos", 0);
+        final int month = intent.getIntExtra("month", 0);
+        final int date = intent.getIntExtra("date", 0);
 
+        tv_date = (TextView) findViewById(R.id.tv_date);
         waterdrop_btn = findViewById(R.id.waterdrop_detail);
         waterdrop_btn2 = findViewById(R.id.waterdrop_color);
         injection_btn = findViewById(R.id.injection_detail);
         injection_btn2 = findViewById(R.id.injection_color);
-        dbHelper.getResult_state(pos);
+        dbHelper.getResult_state(pos, month);
+
+        tv_date.setText(month + ". " + date);
 
         //기본세팅 : 물방울, 주사기 색깔 없음
-        if(dbHelper.getResult_state(pos) == 0) {
+        if(dbHelper.getResult_state(pos, month) == 0) {
             waterdrop_btn2.setVisibility(View.INVISIBLE);
             injection_btn2.setVisibility(View.INVISIBLE);
-        } else if (dbHelper.getResult_state(pos) == 1){
+        } else if (dbHelper.getResult_state(pos, month) == 1){
             // 물방울만 색깔 있을 때
             waterdrop_btn2.setVisibility(View.VISIBLE);
             waterdrop_btn.setVisibility(View.INVISIBLE);
             injection_btn2.setVisibility(View.INVISIBLE);
             injection_btn.setVisibility(View.VISIBLE);
-        } else if (dbHelper.getResult_state(pos) == 2){
+        } else if (dbHelper.getResult_state(pos, month) == 2){
             // 주사기만 색깔 있을 때
             waterdrop_btn2.setVisibility(View.INVISIBLE);
             waterdrop_btn.setVisibility(View.VISIBLE);
@@ -99,10 +106,10 @@ public class CalendarDetail extends AppCompatActivity {
         save_btn = findViewById(R.id.btn_savedetail);
 
         memo_et = (EditText) findViewById(R.id.edittext_memo);
-        memo_et.setText(dbHelper.getResult(pos));
+        memo_et.setText(dbHelper.getResult(pos, month));
 
         image_upload = (ImageView) findViewById(R.id.image_upload);
-        image_byte = dbHelper.getResultimg(pos);
+        image_byte = dbHelper.getResultimg(pos, month);
         System.out.println("open : " + image_byte);
         if (image_byte != null) {
             BitmapFactory.decodeByteArray(image_byte, 0, image_byte.length);
@@ -174,15 +181,16 @@ public class CalendarDetail extends AppCompatActivity {
 
                 text = memo_et.getText().toString();
                 if (image_byte == null){
-                    dbHelper.insert(pos, text, null, waterdrop, injection);
+                    dbHelper.insert(pos, month, text, null, waterdrop, injection);
                 } else {
-                    dbHelper.insert(pos, text, image_byte, waterdrop, injection);
+                    dbHelper.insert(pos, month, text, image_byte, waterdrop, injection);
                 }
 
                 Toast.makeText(getApplicationContext(), "저장되었습니다.", Toast.LENGTH_LONG).show();
 
                 System.out.println("after save : " + image_byte);
-                finish();
+                Intent return_tab = new Intent(CalendarDetail.this, CalendarTab.class);
+                startActivity(return_tab);
 
             }
         });
